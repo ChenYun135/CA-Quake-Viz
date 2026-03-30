@@ -23,7 +23,7 @@ Spatiotemporal Evolution and Risk Management Platform for California Seismic Act
 * 科研数据共享 (Data Export)：提供标准化的 CSV 导出接口，支持将筛选后的数据集快速导入 SPSS, R 或 Python 进行高级计量经济学分析。
 
  🎓 访问学者成果说明
-本项目系 Cal Poly 访问学者 (Visiting Scholar) 数字化实验室研究成果的一部分。
+本项目系武汉理工大学与 Cal Poly 访问学者 (Visiting Scholar) 数字化实验室研究成果的一部分。
 * 研究员: Yun Chen, Associate Professor, Ph.D.
 * 研究方向: 绿色供应链、应急管理、创新管理。
 
