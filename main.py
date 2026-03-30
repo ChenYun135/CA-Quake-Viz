@@ -1,37 +1,33 @@
-import altair as alt  # 强行引导云端安装
-import streamlit as st
-import pandas as pd
-import requests
-import plotly.express as px
 import streamlit as st
 import pandas as pd
 import requests
 import plotly.express as px
 from datetime import datetime
 
-# 页面配置：设置专业标题和宽屏布局
+# 1. 顶层配置：保持专业感
 st.set_page_config(page_title="加州地震研究实验室", layout="wide", page_icon="🌋")
 
-# 自定义 CSS 样式，提升专业感
+# 自定义 CSS 提升界面质感
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
-    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e9ecef; }
+    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🛰️ 加州百年地震风险监测系统 (M4.0+)")
-st.caption("数据来源：美国地质调查局 (USGS) | 研究范围：1926年至今加利福尼亚州全境")
+st.title("🛰️ 加州百年地震风险监测系统 (专业版)")
+st.caption("研究员：Yun Chen | 数据源：USGS | 技术栈：Streamlit + Plotly")
 
-# 侧边栏：交互控制中心
+# 2. 侧边栏：便捷筛选
 with st.sidebar:
-    st.header("⚙️ 研究参数设定")
-    year_range = st.slider("选择观测时间跨度:", 1926, 2026, (1980, 2026))
-    min_mag = st.number_input("最低震级筛选:", 4.0, 9.0, 4.5, step=0.5)
+    st.header("⚙️ 筛选参数")
+    year_range = st.slider("观测年份区间:", 1926, 2026, (1980, 2026))
+    min_mag = st.number_input("最低震级筛选:", 4.0, 9.0, 4.5, step=0.1)
     st.divider()
-    st.info("💡 提示：滑动滑块可实时动态更新地图分布。")
+    st.info("💡 地图支持滚轮缩放，点击右侧标签可隐藏特定震级数据。")
 
-@st.cache_data(show_spinner="正在同步 USGS 全球数据库...")
+# 3. 数据加载逻辑 (增加错误处理)
+@st.cache_data(show_spinner="正在同步科研数据库...")
 def load_data(start_year):
     url = "https://earthquake.usgs.gov/fdsnws/event/1/query"
     params = {
@@ -56,73 +52,58 @@ def load_data(start_year):
         df = pd.DataFrame(features)
         df['year'] = df['time'].dt.year
         return df
-    except Exception as e:
-        st.error(f"数据获取失败: {e}")
+    except:
         return pd.DataFrame()
 
-# 数据加载逻辑
-raw_df = load_data(year_range[0])
+df_raw = load_data(year_range[0])
 
-if not raw_df.empty:
-    # 动态筛选数据
-    df = raw_df[(raw_df['year'] >= year_range[0]) & 
-                (raw_df['year'] <= year_range[1]) & 
-                (raw_df['mag'] >= min_mag)]
+if not df_raw.empty:
+    # 动态筛选
+    df = df_raw[(df_raw['year'] >= year_range[0]) & 
+                (df_raw['year'] <= year_range[1]) & 
+                (df_raw['mag'] >= min_mag)]
 
-    # --- 第一部分：核心指标看板 ---
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("观测记录总数", f"{len(df)} 次")
-    with col2:
-        st.metric("区域最高震级", f"M {df['mag'].max():.1f}")
-    with col3:
-        st.metric("平均震级", f"M {df['mag'].mean():.1f}")
-    with col4:
-        st.metric("最活跃年份", int(df['year'].mode()[0]) if not df.empty else "-")
+    # --- 核心指标看板 (功能性) ---
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("记录总数", f"{len(df)} 次")
+    m2.metric("最大震级", f"M {df['mag'].max():.1f}")
+    m3.metric("平均震级", f"M {df['mag'].mean():.1f}")
+    m4.metric("最活跃年份", int(df['year'].mode()[0]) if not df.empty else "-")
 
     st.divider()
 
-    # --- 第二部分：多维分析标签页 ---
-    tab1, tab2, tab3 = st.tabs(["🗺️ 空间分布地图", "📊 时间序列分析", "📋 原始科研数据"])
+    # --- 多维展示标签页 (便捷性) ---
+    tab1, tab2, tab3 = st.tabs(["🗺️ 空间分布地图", "📈 趋势与密度分析", "💾 结构化原始数据"])
 
     with tab1:
-        st.subheader("加州地震空间热力分布")
-        fig_map = px.scatter_map(
+        # 使用 scatter_mapbox 代替 scatter_map 以获得更好的兼容性和交互感
+        fig_map = px.scatter_mapbox(
             df, lat="lat", lon="lon", size="mag", color="mag",
-            color_continuous_scale="Reds", 
-            hover_name="place", hover_data=["time", "mag"],
-            zoom=5, height=700,
-            title=f"{year_range[0]}-{year_range[1]} 年间地震分布图"
+            color_continuous_scale="Reds", hover_name="place",
+            mapbox_style="carto-positron", zoom=5, height=700,
+            title=f"加州地震空间分布图 ({year_range[0]}-{year_range[1]})"
         )
-        fig_map.update_layout(map_style="carto-positron", margin={"r":0,"t":40,"l":0,"b":0})
-        st.plotly_chart(fig_map, width="stretch")
+        fig_map.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+        st.plotly_chart(fig_map, use_container_width=True)
 
     with tab2:
-        st.subheader("地震频率年度趋势")
-        yearly_counts = df.groupby('year').size().reset_index(name='count')
-        fig_line = px.line(yearly_counts, x='year', y='count', 
-                          labels={'year': '年份', 'count': '地震次数'},
-                          template="plotly_white", markers=True)
-        fig_line.update_traces(line_color='#d62728')
-        st.plotly_chart(fig_line, width="stretch")
-        
-        st.subheader("震级分布密度")
-        fig_hist = px.histogram(df, x="mag", nbins=20, 
-                               labels={'mag': '震级'},
-                               template="plotly_white", color_discrete_sequence=['#ff7f0e'])
-    
-        st.plotly_chart(fig_hist, width="stretch")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.subheader("年度地震频次趋势")
+            y_counts = df.groupby('year').size().reset_index(name='counts')
+            fig_l = px.line(y_counts, x='year', y='counts', template="plotly_white")
+            st.plotly_chart(fig_l, use_container_width=True)
+        with c2:
+            st.subheader("震级分布密度")
+            fig_h = px.histogram(df, x="mag", nbins=20, template="plotly_white", color_discrete_sequence=['#d62728'])
+            st.plotly_chart(fig_h, use_container_width=True)
 
     with tab3:
-        st.subheader("结构化数据视图")
-        st.dataframe(df.sort_values('time', ascending=False), 
-                     column_config={
-                         "time": "发生时间",
-                         "mag": st.column_config.NumberColumn("震级", format="M %.1f"),
-                         "place": "地点名称",
-                         "lat": "纬度",
-                         "lon": "经度"
-                     }, use_container_width=True)
+        st.subheader("筛选后的科研数据集")
+        st.dataframe(df.sort_values('time', ascending=False), use_container_width=True)
+        # 增加一键下载功能 (功能性)
+        csv = df.to_csv(index=False).encode('utf-8')
+        st.download_button("📥 点击下载筛选后的数据集 (CSV)", data=csv, file_name="ca_quake_data.csv")
 
 else:
-    st.warning("暂无符合条件的数据，请调整筛选参数。")
+    st.warning("正在连接 USGS 数据库，请稍候...")
