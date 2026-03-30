@@ -1,3 +1,8 @@
+import altair as alt  # 强行引导云端安装
+import streamlit as st
+import pandas as pd
+import requests
+import plotly.express as px
 import streamlit as st
 import pandas as pd
 import requests
