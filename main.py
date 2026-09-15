@@ -76,13 +76,16 @@ if not df_raw.empty:
     tab1, tab2, tab3 = st.tabs(["🗺️ 空间分布地图", "📈 趋势与密度分析", "💾 结构化原始数据"])
 
     with tab1:
-        # 使用 scatter_mapbox 代替 scatter_map 以获得更好的兼容性和交互感
-        fig_map = px.scatter_map(
+    fig_map = px.scatter_mapbox(
         df, lat="lat", lon="lon", size="mag", color="mag",
         color_continuous_scale="Reds", hover_name="place",
-        zoom=5, height=700,
+        mapbox_style="carto-positron", zoom=5, height=700,
         title=f"加州地震空间分布图 ({year_range[0]}-{year_range[1]})"
     )
+    # 这一行必须和上面的 fig_map 保持完美的对齐（通常是 4 个空格的缩进）
+    fig_map.update_layout(margin={"r": 0, "t": 40, "l": 0, "b": 0})
+    st.plotly_chart(fig_map, use_container_width=True)
+
 fig_map.update_layout(mapbox_style="open-street-map")
         fig_map.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
         st.plotly_chart(fig_map, use_container_width=True)
