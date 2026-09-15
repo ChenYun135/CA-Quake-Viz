@@ -77,12 +77,13 @@ if not df_raw.empty:
 
     with tab1:
         # 使用 scatter_mapbox 代替 scatter_map 以获得更好的兼容性和交互感
-        fig_map = px.scatter_mapbox(
-            df, lat="lat", lon="lon", size="mag", color="mag",
-            color_continuous_scale="Reds", hover_name="place",
-            mapbox_style="carto-positron", zoom=5, height=700,
-            title=f"加州地震空间分布图 ({year_range[0]}-{year_range[1]})"
-        )
+        fig_map = px.scatter_map(
+        df, lat="lat", lon="lon", size="mag", color="mag",
+        color_continuous_scale="Reds", hover_name="place",
+        zoom=5, height=700,
+        title=f"加州地震空间分布图 ({year_range[0]}-{year_range[1]})"
+    )
+fig_map.update_layout(mapbox_style="open-street-map")
         fig_map.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
         st.plotly_chart(fig_map, use_container_width=True)
 
