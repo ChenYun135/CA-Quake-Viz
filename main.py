@@ -76,7 +76,6 @@ if not df_raw.empty:
     tab1, tab2, tab3 = st.tabs(["🗺️ 空间分布地图", "📈 趋势与密度分析", "💾 结构化原始数据"])
 
     with tab1:
-        # 这里的每一行前面都要有相同的缩进（比如 4 个空格）
         fig_map = px.scatter_mapbox(
             df, lat="lat", lon="lon", size="mag", color="mag",
             color_continuous_scale="Reds", hover_name="place",
@@ -85,9 +84,6 @@ if not df_raw.empty:
         )
         fig_map.update_layout(margin={"r":0, "t":40, "l":0, "b":0})
         st.plotly_chart(fig_map, use_container_width=True)
-    fig_map.update_layout(mapbox_style="open-street-map")
-            fig_map.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
-            st.plotly_chart(fig_map, use_container_width=True)
 
     with tab2:
         c1, c2 = st.columns(2)
